@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/home_page.dart';
@@ -16,14 +17,33 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Habit Tracker',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        primarySwatch: Colors.deepPurple,
+        scaffoldBackgroundColor: Colors.white,
       ),
-      initialRoute: '/login',
+      home: AuthWrapper(),
       routes: {
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => HomePage(),
+      },
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // If the snapshot has user data, then they're already signed in
+        if (snapshot.hasData) {
+          return HomePage();
+        }
+        // Otherwise, they're not signed in
+        return LoginPage();
       },
     );
   }
