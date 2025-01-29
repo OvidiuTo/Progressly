@@ -15,6 +15,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
@@ -57,114 +59,184 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Create Account',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 32.0),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Email',
-                      hint: 'Enter your email',
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!_isValidEmail(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Password',
-                      hint: 'Enter your password',
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Confirm Password',
-                      hint: 'Confirm your password',
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 24.0),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 16.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: AppColors.error),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 48),
+              Icon(
+                Icons.person_add_rounded,
+                size: 64,
+                color: AppColors.primary,
+              ),
+              SizedBox(height: 24),
+              Container(
+                padding: EdgeInsets.all(24),
+                decoration: AppStyles.containerDecoration(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Create Account',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                         textAlign: TextAlign.center,
                       ),
-                    ),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _register,
-                    style: AppStyles.elevatedButtonStyle(),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text('Register'),
-                  ),
-                  SizedBox(height: 16.0),
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Navigator.pop(context);
+                      SizedBox(height: 8),
+                      Text(
+                        'Sign up to start building better habits',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 32),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: AppStyles.textFieldDecoration(
+                          'Email',
+                          hint: 'Enter your email',
+                          icon: Icons.email_outlined,
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!_isValidEmail(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: AppStyles.textFieldDecoration(
+                          'Password',
+                          hint: 'Enter your password',
+                          icon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          onTogglePassword: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
                           },
-                    child: Text('Already have an account? Login'),
+                          obscurePassword: _obscurePassword,
+                        ),
+                        obscureText: _obscurePassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        decoration: AppStyles.textFieldDecoration(
+                          'Confirm Password',
+                          hint: 'Confirm your password',
+                          icon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          onTogglePassword: () {
+                            setState(() {
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
+                            });
+                          },
+                          obscurePassword: _obscureConfirmPassword,
+                        ),
+                        obscureText: _obscureConfirmPassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 24),
+                      if (_errorMessage != null)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.error,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _register,
+                        style: AppStyles.elevatedButtonStyle(),
+                        child: _isLoading
+                            ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text('Sign Up'),
+                      ),
+                      SizedBox(height: 16),
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                              },
+                        style: AppStyles.textButtonStyle(),
+                        child: Text(
+                          'Already have an account? Sign In',
+                          style: AppStyles.linkTextStyle(),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

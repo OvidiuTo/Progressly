@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
 import '../services/auth_service.dart';
 import '../utils/styles.dart';
 
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
@@ -56,96 +58,181 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 32.0),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Email',
-                      hint: 'Enter your email',
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!_isValidEmail(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Password',
-                      hint: 'Enter your password',
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 24.0),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 16.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: AppColors.error),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: AppStyles.elevatedButtonStyle(),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text('Login'),
-                  ),
-                  SizedBox(height: 16.0),
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Navigator.pushNamed(context, '/register');
-                          },
-                    child: Text('Create an account'),
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 48),
+              FadeInDown(
+                duration: Duration(milliseconds: 500),
+                child: Icon(
+                  Icons.track_changes_rounded,
+                  size: 64,
+                  color: AppColors.primary,
+                ),
               ),
-            ),
+              SizedBox(height: 24),
+              Container(
+                padding: EdgeInsets.all(24),
+                decoration: AppStyles.containerDecoration(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FadeInDown(
+                        duration: Duration(milliseconds: 600),
+                        child: Text(
+                          'Welcome Back',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      FadeInDown(
+                        duration: Duration(milliseconds: 700),
+                        child: Text(
+                          'Sign in to continue tracking your habits',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                      FadeInDown(
+                        duration: Duration(milliseconds: 800),
+                        child: TextFormField(
+                          controller: _emailController,
+                          decoration: AppStyles.textFieldDecoration(
+                            'Email',
+                            hint: 'Enter your email',
+                            icon: Icons.email_outlined,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            if (!_isValidEmail(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      FadeInDown(
+                        duration: Duration(milliseconds: 900),
+                        child: TextFormField(
+                          controller: _passwordController,
+                          decoration: AppStyles.textFieldDecoration(
+                            'Password',
+                            hint: 'Enter your password',
+                            icon: Icons.lock_outline_rounded,
+                            isPassword: true,
+                            onTogglePassword: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                            obscurePassword: _obscurePassword,
+                          ),
+                          obscureText: _obscurePassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                      if (_errorMessage != null)
+                        FadeInDown(
+                          duration: Duration(milliseconds: 1000),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.error,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: TextStyle(
+                                      color: AppColors.error,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: 24),
+                      FadeInDown(
+                        duration: Duration(milliseconds: 1100),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _login,
+                          style: AppStyles.elevatedButtonStyle(),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : Text('Sign In'),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      FadeInDown(
+                        duration: Duration(milliseconds: 1200),
+                        child: TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.pushNamed(context, '/register');
+                                },
+                          style: AppStyles.textButtonStyle(),
+                          child: Text(
+                            'Don\'t have an account? Sign Up',
+                            style: AppStyles.linkTextStyle(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
