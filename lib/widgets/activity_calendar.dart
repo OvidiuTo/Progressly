@@ -1,22 +1,64 @@
 import 'package:flutter/material.dart';
 import '../utils/styles.dart';
+import '../models/activity_log.dart';
 
-class ActivityCalendar extends StatelessWidget {
-  final List<DateTime> activeDates;
-  final int monthsToShow;
+class ActivityCalendar extends StatefulWidget {
+  final List<ActivityLog> activityLogs;
 
   const ActivityCalendar({
     super.key,
-    required this.activeDates,
-    this.monthsToShow = 3,
+    required this.activityLogs,
   });
+
+  @override
+  State<ActivityCalendar> createState() => _ActivityCalendarState();
+}
+
+class _ActivityCalendarState extends State<ActivityCalendar> {
+  late DateTime _currentMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentMonth = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      1,
+    );
+  }
+
+  void _previousMonth() {
+    setState(() {
+      _currentMonth = DateTime(
+        _currentMonth.year,
+        _currentMonth.month - 1,
+        1,
+      );
+    });
+  }
+
+  void _nextMonth() {
+    final now = DateTime.now();
+    final nextMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month + 1,
+      1,
+    );
+    if (!nextMonth.isAfter(now)) {
+      setState(() {
+        _currentMonth = nextMonth;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final months = List.generate(monthsToShow, (index) {
-      return DateTime(now.year, now.month - index);
-    }).reversed.toList();
+    final lastDayOfMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month + 1,
+      0,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -34,40 +76,74 @@ class ActivityCalendar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Activity Calendar',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: _previousMonth,
+                color: AppColors.textPrimary,
+              ),
+              Text(
+                '${_getMonthName(_currentMonth)} ${_currentMonth.year}',
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: _currentMonth.year == now.year &&
+                        _currentMonth.month == now.month
+                    ? null
+                    : _nextMonth,
+                color: AppColors.textPrimary,
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: months
-                .map((month) => Text(
-                      _getMonthName(month),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ))
-                .toList(),
+            children: List.generate(
+              7,
+              (index) => SizedBox(
+                width: 30,
+                child: Text(
+                  _getWeekdayName(index),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _getDaysInRange(months.first, now),
-              itemBuilder: (context, index) {
-                final date = months.first.add(Duration(days: index));
-                if (date.isAfter(now)) return const SizedBox.shrink();
-
-                return _buildDayCell(date);
-              },
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
             ),
+            itemCount: 42, // 6 weeks * 7 days
+            itemBuilder: (context, index) {
+              final firstDayOffset = _currentMonth.weekday - 1;
+              final day = index - firstDayOffset + 1;
+              final date =
+                  DateTime(_currentMonth.year, _currentMonth.month, day);
+
+              if (index < firstDayOffset ||
+                  date.isAfter(lastDayOfMonth) ||
+                  date.isAfter(now)) {
+                return const SizedBox();
+              }
+
+              return _buildDayCell(date);
+            },
           ),
           const SizedBox(height: 8),
           Row(
@@ -85,30 +161,51 @@ class ActivityCalendar extends StatelessWidget {
   }
 
   Widget _buildDayCell(DateTime date) {
-    final isActive = activeDates.any((activeDate) =>
-        activeDate.year == date.year &&
-        activeDate.month == date.month &&
-        activeDate.day == date.day);
+    final now = DateTime.now();
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
 
-    final completionCount = activeDates
-        .where((activeDate) =>
-            activeDate.year == date.year &&
-            activeDate.month == date.month &&
-            activeDate.day == date.day)
-        .length;
+    // Find the activity log for this date
+    final dayLog = widget.activityLogs
+        .where((log) =>
+            log.date.year == date.year &&
+            log.date.month == date.month &&
+            log.date.day == date.day)
+        .toList();
+
+    final completionRate = dayLog.isNotEmpty
+        ? (dayLog.first.habitsCompleted / dayLog.first.totalHabits) * 100
+        : 0.0;
 
     return Container(
       width: 20,
       height: 20,
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: _getColorForCount(completionCount),
+        color: _getColorForCompletion(completionRate),
         borderRadius: BorderRadius.circular(4),
+        border: isToday
+            ? Border.all(
+                color: AppColors.primary,
+                width: 2,
+              )
+            : null,
       ),
       child: Tooltip(
-        message:
-            '${date.day}/${date.month}/${date.year}: $completionCount habits completed',
-        child: const SizedBox.expand(),
+        message: dayLog.isNotEmpty
+            ? '${date.day}/${date.month}/${date.year}: ${dayLog.first.habitsCompleted}/${dayLog.first.totalHabits} habits completed'
+            : '${date.day}/${date.month}/${date.year}: No habits completed',
+        child: Center(
+          child: Text(
+            '${date.day}',
+            style: TextStyle(
+              color:
+                  completionRate > 0 ? Colors.white : AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -144,11 +241,11 @@ class ActivityCalendar extends StatelessWidget {
     );
   }
 
-  Color _getColorForCount(int count) {
-    if (count == 0) return AppColors.surface;
-    if (count <= 1) return AppColors.primary.withOpacity(0.3);
-    if (count <= 2) return AppColors.primary.withOpacity(0.5);
-    if (count <= 3) return AppColors.primary.withOpacity(0.7);
+  Color _getColorForCompletion(double percentage) {
+    if (percentage == 0) return AppColors.surface;
+    if (percentage <= 25) return AppColors.primary.withOpacity(0.3);
+    if (percentage <= 50) return AppColors.primary.withOpacity(0.5);
+    if (percentage <= 75) return AppColors.primary.withOpacity(0.7);
     return AppColors.primary;
   }
 
@@ -172,5 +269,10 @@ class ActivityCalendar extends StatelessWidget {
 
   int _getDaysInRange(DateTime start, DateTime end) {
     return end.difference(start).inDays + 1;
+  }
+
+  String _getWeekdayName(int weekday) {
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return days[weekday];
   }
 }

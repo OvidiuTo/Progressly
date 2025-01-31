@@ -78,14 +78,32 @@ class _HomePageState extends State<HomePage> {
             }
 
             final habits = snapshot.data ?? [];
-            final completedToday = habits.where((habit) {
-              final today = DateTime.now();
-              final todayDate = DateTime(today.year, today.month, today.day);
-              return habit.completedDates.any((date) =>
-                  date.year == todayDate.year &&
-                  date.month == todayDate.month &&
-                  date.day == todayDate.day);
-            }).length;
+
+            // Sort habits: uncompleted first, then completed
+            final sortedHabits = habits.toList()
+              ..sort((a, b) {
+                final now = DateTime.now();
+                final todayDate = DateTime(now.year, now.month, now.day);
+
+                final aCompleted = a.completedDates.any((date) =>
+                    date.year == todayDate.year &&
+                    date.month == todayDate.month &&
+                    date.day == todayDate.day);
+
+                final bCompleted = b.completedDates.any((date) =>
+                    date.year == todayDate.year &&
+                    date.month == todayDate.month &&
+                    date.day == todayDate.day);
+
+                if (aCompleted == bCompleted) {
+                  // If both completed or both uncompleted, sort by time
+                  return a.time.hour * 60 +
+                      a.time.minute -
+                      (b.time.hour * 60 + b.time.minute);
+                }
+                // Put uncompleted first
+                return aCompleted ? 1 : -1;
+              });
 
             return CustomScrollView(
               slivers: [
@@ -96,14 +114,15 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildProgressCard(habits.length, completedToday),
+                        _buildProgressCard(
+                            habits.length, sortedHabits.length - habits.length),
                         const SizedBox(height: 24),
                         _buildTodaySection(),
                       ],
                     ),
                   ),
                 ),
-                if (habits.isEmpty)
+                if (sortedHabits.isEmpty)
                   SliverFillRemaining(
                     child: Center(
                       child: Column(
@@ -139,8 +158,9 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(16.0),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildHabitItem(habits[index]),
-                        childCount: habits.length,
+                        (context, index) =>
+                            _buildHabitItem(sortedHabits[index]),
+                        childCount: sortedHabits.length,
                       ),
                     ),
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lottie/lottie.dart';
 import '../models/activity_log.dart';
 import '../utils/styles.dart';
 import '../widgets/app_drawer.dart';
@@ -62,52 +63,51 @@ class StatisticsPage extends StatelessWidget {
 
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Monthly Overview',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 24),
-                _buildStatCard(
-                  'Active Days',
-                  totalDays.toString(),
-                  Icons.calendar_today,
-                ),
-                const SizedBox(height: 16),
-                _buildStatCard(
-                  'Completed Habits',
-                  totalCompletedHabits.toString(),
-                  Icons.check_circle,
-                ),
-                const SizedBox(height: 16),
-                _buildStatCard(
-                  'Average Completion',
-                  '${averageCompletion.toStringAsFixed(1)}%',
-                  Icons.trending_up,
-                ),
-                const SizedBox(height: 24),
-                ActivityCalendar(
-                  activeDates: logs
-                      .where((log) => log.habitsCompleted > 0)
-                      .map((log) => log.date)
-                      .toList(),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Daily Breakdown',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Monthly Overview',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildStatCard(
+                    'Active Days',
+                    totalDays.toString(),
+                    StatIcon.lottie('assets/lottie/fire.json'),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatCard(
+                    'Completed Habits',
+                    totalCompletedHabits.toString(),
+                    StatIcon.icon(Icons.check_circle),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatCard(
+                    'Average Completion',
+                    '${averageCompletion.toStringAsFixed(1)}%',
+                    StatIcon.icon(Icons.trending_up),
+                  ),
+                  const SizedBox(height: 24),
+                  ActivityCalendar(
+                    activityLogs: logs,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Daily Breakdown',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: logs.length,
                     itemBuilder: (context, index) {
                       final log = logs[index];
@@ -142,8 +142,8 @@ class StatisticsPage extends StatelessWidget {
                       );
                     },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -151,7 +151,7 @@ class StatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon) {
+  Widget _buildStatCard(String title, String value, StatIcon icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -167,7 +167,18 @@ class StatisticsPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 24),
+          if (icon.icon != null)
+            Icon(icon.icon, color: AppColors.primary, size: 24)
+          else if (icon.lottieAsset != null)
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: Lottie.asset(
+                icon.lottieAsset!,
+                repeat: false,
+                fit: BoxFit.contain,
+              ),
+            ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,15 +217,24 @@ class StatisticsPage extends StatelessWidget {
     if (user == null) throw Exception('User not authenticated');
 
     final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    final startDate = DateTime(now.year, now.month, 1);
+    final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
     return FirebaseFirestore.instance
         .collection('activity_logs')
         .where('userId', isEqualTo: user.uid)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
         .orderBy('date', descending: true)
         .snapshots();
   }
+}
+
+// First, create a helper class to handle both types of widgets
+class StatIcon {
+  final IconData? icon;
+  final String? lottieAsset;
+
+  const StatIcon.icon(this.icon) : lottieAsset = null;
+  const StatIcon.lottie(this.lottieAsset) : icon = null;
 }
