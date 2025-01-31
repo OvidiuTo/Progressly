@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
 import '../utils/styles.dart';
 import '../providers/route_provider.dart';
@@ -49,10 +50,12 @@ class _AppDrawerState extends State<AppDrawer> {
                           shape: BoxShape.circle,
                           color: AppColors.primary.withOpacity(0.1),
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 48,
-                          color: AppColors.primary,
+                        child: Lottie.asset(
+                          width: 32,
+                          height: 32,
+                          repeat: false,
+                          'assets/lottie/profile.json',
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 16),

@@ -75,22 +75,32 @@ class StatisticsPage extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 24),
-                  _buildStatCard(
-                    'Active Days',
-                    totalDays.toString(),
-                    StatIcon.lottie('assets/lottie/fire.json'),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildStatCard(
-                    'Completed Habits',
-                    totalCompletedHabits.toString(),
-                    StatIcon.icon(Icons.check_circle),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildStatCard(
-                    'Average Completion',
-                    '${averageCompletion.toStringAsFixed(1)}%',
-                    StatIcon.icon(Icons.trending_up),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Active Days',
+                          totalDays.toString(),
+                          StatIcon.lottie('assets/lottie/fire.json'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Completed',
+                          totalCompletedHabits.toString(),
+                          StatIcon.icon(Icons.check_circle),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Completion',
+                          '${averageCompletion.toStringAsFixed(1)}%',
+                          StatIcon.icon(Icons.trending_up),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   ActivityCalendar(
@@ -153,7 +163,7 @@ class StatisticsPage extends StatelessWidget {
 
   Widget _buildStatCard(String title, String value, StatIcon icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -165,41 +175,40 @@ class StatisticsPage extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (icon.icon != null)
-            Icon(icon.icon, color: AppColors.primary, size: 24)
+            Icon(icon.icon, color: AppColors.primary, size: 20)
           else if (icon.lottieAsset != null)
             SizedBox(
-              width: 32,
-              height: 32,
+              width: 24,
+              height: 24,
               child: Lottie.asset(
                 icon.lottieAsset!,
                 repeat: false,
                 fit: BoxFit.contain,
               ),
             ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+            maxLines: 2,
+            softWrap: true,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

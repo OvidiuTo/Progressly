@@ -96,14 +96,22 @@ class _HomePageState extends State<HomePage> {
                     date.day == todayDate.day);
 
                 if (aCompleted == bCompleted) {
-                  // If both completed or both uncompleted, sort by time
                   return a.time.hour * 60 +
                       a.time.minute -
                       (b.time.hour * 60 + b.time.minute);
                 }
-                // Put uncompleted first
                 return aCompleted ? 1 : -1;
               });
+
+            // Calculate completed habits count
+            final completedToday = habits.where((habit) {
+              final today = DateTime.now();
+              final todayDate = DateTime(today.year, today.month, today.day);
+              return habit.completedDates.any((date) =>
+                  date.year == todayDate.year &&
+                  date.month == todayDate.month &&
+                  date.day == todayDate.day);
+            }).length;
 
             return CustomScrollView(
               slivers: [
@@ -114,8 +122,7 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildProgressCard(
-                            habits.length, sortedHabits.length - habits.length),
+                        _buildProgressCard(habits.length, completedToday),
                         const SizedBox(height: 24),
                         _buildTodaySection(),
                       ],
