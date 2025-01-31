@@ -7,6 +7,7 @@ import '../services/habit_service.dart';
 import '../models/habit.dart';
 import '../utils/styles.dart';
 import '../widgets/add_habit_dialog.dart';
+import '../widgets/app_drawer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,6 +53,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
       body: SafeArea(
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getUserHabits(),
@@ -154,6 +156,12 @@ class _HomePageState extends State<HomePage> {
       floating: true,
       backgroundColor: AppColors.background,
       elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+        onPressed: () {
+          Scaffold.of(context).openDrawer();
+        },
+      ),
       title: const Text(
         'My Habits',
         style: TextStyle(
@@ -161,17 +169,6 @@ class _HomePageState extends State<HomePage> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.logout_outlined, color: AppColors.textPrimary),
-          onPressed: () async {
-            await _authService.signOut();
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/login');
-            }
-          },
-        ),
-      ],
     );
   }
 
@@ -367,13 +364,44 @@ class _HomePageState extends State<HomePage> {
               color: AppColors.textSecondary,
             ),
           ),
-          trailing: habit.hasReminder
-              ? const Icon(
-                  Icons.notifications_active,
-                  color: AppColors.primary,
-                  size: 20,
-                )
-              : null,
+          trailing: IconButton(
+            icon: Icon(
+              habit.hasReminder
+                  ? Icons.notifications_active
+                  : Icons.notifications_off_outlined,
+              color: habit.hasReminder
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+              size: 24,
+            ),
+            onPressed: () async {
+              try {
+                await _habitService.updateHabitReminder(
+                  habit.id,
+                  !habit.hasReminder,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        habit.hasReminder
+                            ? 'Reminder disabled'
+                            : 'Reminder enabled',
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to update reminder settings'),
+                    ),
+                  );
+                }
+              }
+            },
+          ),
         ),
       ),
     );
