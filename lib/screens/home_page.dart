@@ -8,6 +8,7 @@ import '../models/habit.dart';
 import '../utils/styles.dart';
 import '../widgets/add_habit_dialog.dart';
 import '../widgets/app_drawer.dart';
+import '../providers/route_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,6 +52,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Set current route
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      RouteProvider.instance.setCurrentRoute('/home');
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
