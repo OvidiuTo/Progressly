@@ -4,10 +4,14 @@ import '../models/activity_log.dart';
 
 class ActivityCalendar extends StatefulWidget {
   final List<ActivityLog> activityLogs;
+  final DateTime selectedMonth;
+  final Function(DateTime) onMonthChanged;
 
   const ActivityCalendar({
     super.key,
     required this.activityLogs,
+    required this.selectedMonth,
+    required this.onMonthChanged,
   });
 
   @override
@@ -20,21 +24,26 @@ class _ActivityCalendarState extends State<ActivityCalendar> {
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      1,
-    );
+    _currentMonth = widget.selectedMonth;
+  }
+
+  @override
+  void didUpdateWidget(ActivityCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedMonth != widget.selectedMonth) {
+      setState(() {
+        _currentMonth = widget.selectedMonth;
+      });
+    }
   }
 
   void _previousMonth() {
-    setState(() {
-      _currentMonth = DateTime(
-        _currentMonth.year,
-        _currentMonth.month - 1,
-        1,
-      );
-    });
+    final prevMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month - 1,
+      1,
+    );
+    widget.onMonthChanged(prevMonth);
   }
 
   void _nextMonth() {
@@ -45,9 +54,7 @@ class _ActivityCalendarState extends State<ActivityCalendar> {
       1,
     );
     if (!nextMonth.isAfter(now)) {
-      setState(() {
-        _currentMonth = nextMonth;
-      });
+      widget.onMonthChanged(nextMonth);
     }
   }
 
@@ -136,13 +143,71 @@ class _ActivityCalendarState extends State<ActivityCalendar> {
               final date =
                   DateTime(_currentMonth.year, _currentMonth.month, day);
 
-              if (index < firstDayOffset ||
-                  date.isAfter(lastDayOfMonth) ||
-                  date.isAfter(now)) {
+              // Only hide dates before the first of the month or after the last day
+              if (index < firstDayOffset || date.isAfter(lastDayOfMonth)) {
                 return const SizedBox();
               }
 
-              return _buildDayCell(date);
+              // Show the date but with different styling if it's in the future
+              final now = DateTime.now();
+              final isToday = date.year == now.year &&
+                  date.month == now.month &&
+                  date.day == now.day;
+              final isFuture =
+                  date.isAfter(DateTime(now.year, now.month, now.day));
+
+              // Find the activity log for this date
+              final dayLog = widget.activityLogs
+                  .where((log) =>
+                      log.date.year == date.year &&
+                      log.date.month == date.month &&
+                      log.date.day == date.day)
+                  .toList();
+
+              final completionRate = dayLog.isNotEmpty
+                  ? (dayLog.first.habitsCompleted / dayLog.first.totalHabits) *
+                      100
+                  : 0.0;
+
+              return Container(
+                width: 20,
+                height: 20,
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: isFuture
+                      ? AppColors.surface
+                      : _getColorForCompletion(completionRate),
+                  borderRadius: BorderRadius.circular(4),
+                  border: isToday
+                      ? Border.all(
+                          color: AppColors.primary,
+                          width: 2,
+                        )
+                      : null,
+                ),
+                child: Tooltip(
+                  message: isFuture
+                      ? '${date.day}/${date.month}/${date.year}: Future date'
+                      : dayLog.isNotEmpty
+                          ? '${date.day}/${date.month}/${date.year}: ${dayLog.first.habitsCompleted}/${dayLog.first.totalHabits} habits completed'
+                          : '${date.day}/${date.month}/${date.year}: No habits completed',
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: TextStyle(
+                        color: isFuture
+                            ? AppColors.textSecondary.withOpacity(0.5)
+                            : (completionRate > 0
+                                ? Colors.white
+                                : AppColors.textSecondary),
+                        fontSize: 10,
+                        fontWeight:
+                            isToday ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              );
             },
           ),
           const SizedBox(height: 8),
