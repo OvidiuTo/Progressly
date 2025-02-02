@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/habit_frequency.dart';
 import '../utils/styles.dart';
+import '../models/habit_category.dart';
 
 class AddHabitDialog extends StatefulWidget {
   const AddHabitDialog({super.key});
@@ -12,20 +13,81 @@ class AddHabitDialog extends StatefulWidget {
 class _AddHabitDialogState extends State<AddHabitDialog> {
   final _formKey = GlobalKey<FormState>();
   final _habitNameController = TextEditingController();
-  TimeOfDay _selectedTime = TimeOfDay.now();
-  HabitFrequency _selectedFrequency = HabitFrequency.daily;
-  bool _hasReminder = false;
+  HabitCategory _selectedCategory = HabitCategory.other;
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
+  Widget _buildCategorySelector() {
+    return GridView.count(
+      shrinkWrap: true,
+      crossAxisCount: 4,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 0.9,
+      physics: const NeverScrollableScrollPhysics(),
+      children: HabitCategory.values.map((category) {
+        final isSelected = category == _selectedCategory;
+
+        return InkWell(
+          onTap: () => setState(() => _selectedCategory = category),
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? category.color.withOpacity(0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? category.color
+                    : AppColors.textSecondary.withOpacity(0.1),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    flex: 3,
+                    child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: category.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            category.icon,
+                            color: category.color,
+                            size: 18,
+                          ),
+                        )),
+                  ),
+                  const SizedBox(height: 6),
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      category.label,
+                      style: TextStyle(
+                        color: isSelected
+                            ? category.color
+                            : AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
   }
 
   @override
@@ -57,132 +119,23 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
             const SizedBox(height: 24),
             Form(
               key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _habitNameController,
-                    decoration: AppStyles.textFieldDecoration(
-                      'Habit Name',
-                      hint: 'Enter habit name',
-                      icon: Icons.edit_outlined,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a habit name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () => _selectTime(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.textSecondary.withOpacity(0.1),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            color: AppColors.textSecondary,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Reminder Time: ${_selectedTime.format(context)}',
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.textSecondary.withOpacity(0.1),
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<HabitFrequency>(
-                        value: _selectedFrequency,
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                        ),
-                        items: HabitFrequency.values.map((frequency) {
-                          return DropdownMenuItem<HabitFrequency>(
-                            value: frequency,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.calendar_today_outlined,
-                                  color: AppColors.textSecondary,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(frequency.displayName),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (HabitFrequency? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedFrequency = newValue;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: const Text(
-                      'Enable Reminder',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Get notified at the selected time',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                    value: _hasReminder,
-                    activeColor: AppColors.primary,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _hasReminder = value;
-                      });
-                    },
-                  ),
-                ],
+              child: TextFormField(
+                controller: _habitNameController,
+                decoration: AppStyles.textFieldDecoration(
+                  'Habit Name',
+                  hint: 'Enter habit name',
+                  icon: Icons.edit_outlined,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a habit name';
+                  }
+                  return null;
+                },
               ),
             ),
+            const SizedBox(height: 24),
+            _buildCategorySelector(),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -198,9 +151,10 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                     if (_formKey.currentState!.validate()) {
                       Navigator.pop(context, {
                         'name': _habitNameController.text.trim(),
-                        'time': _selectedTime,
-                        'frequency': _selectedFrequency,
-                        'hasReminder': _hasReminder,
+                        'time': TimeOfDay.now(),
+                        'frequency': HabitFrequency.daily,
+                        'hasReminder': false,
+                        'category': _selectedCategory,
                       });
                     }
                   },

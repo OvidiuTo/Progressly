@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'habit_frequency.dart';
+import 'habit_category.dart';
 
 class Habit {
   final String id;
@@ -11,6 +12,7 @@ class Habit {
   final DateTime createdAt;
   final List<DateTime> completedDates;
   final bool hasReminder;
+  final HabitCategory category;
 
   const Habit({
     required this.id,
@@ -21,6 +23,7 @@ class Habit {
     required this.createdAt,
     required this.hasReminder,
     this.completedDates = const [],
+    required this.category,
   });
 
   Map<String, dynamic> toMap() {
@@ -33,6 +36,7 @@ class Habit {
       'completedDates':
           completedDates.map((date) => Timestamp.fromDate(date)).toList(),
       'hasReminder': hasReminder,
+      'category': category.name,
     };
   }
 
@@ -54,6 +58,10 @@ class Habit {
           .map((date) => (date as Timestamp).toDate())
           .toList(),
       hasReminder: map['hasReminder'] as bool? ?? false,
+      category: HabitCategory.values.firstWhere(
+        (c) => c.name == map['category'],
+        orElse: () => HabitCategory.other,
+      ),
     );
   }
 }

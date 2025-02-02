@@ -5,6 +5,7 @@ import '../models/habit_frequency.dart';
 import '../services/auth_service.dart';
 import '../services/habit_service.dart';
 import '../models/habit.dart';
+import '../models/habit_category.dart';
 import '../utils/styles.dart';
 import '../widgets/add_habit_dialog.dart';
 import '../widgets/app_drawer.dart';
@@ -35,6 +36,7 @@ class _HomePageState extends State<HomePage> {
           time: result['time'] as TimeOfDay,
           frequency: result['frequency'] as HabitFrequency,
           hasReminder: result['hasReminder'] as bool,
+          category: result['category'] as HabitCategory,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -417,8 +419,11 @@ class _HomePageState extends State<HomePage> {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error,
-        child: const Icon(Icons.delete, color: Colors.white),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(Icons.delete, color: AppColors.error),
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) async {
@@ -443,55 +448,102 @@ class _HomePageState extends State<HomePage> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.textSecondary.withOpacity(0.1),
+            color: isCompleted
+                ? habit.category.color.withOpacity(0.2)
+                : AppColors.textSecondary.withOpacity(0.1),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: habit.category.color.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          leading: IconButton(
-            icon: Icon(
-              isCompleted ? Icons.check_circle : Icons.circle_outlined,
-              color: isCompleted ? AppColors.primary : AppColors.textSecondary,
-              size: 28,
+          contentPadding: const EdgeInsets.all(16),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? habit.category.color.withOpacity(0.15)
+                  : habit.category.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            onPressed: () async {
-              try {
-                await _habitService.toggleHabitCompletion(habit.id);
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to update habit completion status'),
-                    ),
-                  );
+            child: IconButton(
+              icon: Icon(
+                isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                color: isCompleted
+                    ? habit.category.color
+                    : AppColors.textSecondary,
+                size: 24,
+              ),
+              onPressed: () async {
+                try {
+                  await _habitService.toggleHabitCompletion(habit.id);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text('Failed to update habit completion status'),
+                      ),
+                    );
+                  }
                 }
-              }
-            },
-          ),
-          title: Text(
-            habit.name,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-              decoration: isCompleted
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
+              },
             ),
           ),
-          subtitle: Text(
-            '${habit.time.format(context)} - ${habit.frequency.displayName}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+          title: Row(
+            children: [
+              Icon(
+                habit.category.icon,
+                color: habit.category.color,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  habit.name,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    decoration: isCompleted
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: AppColors.textSecondary,
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  habit.frequency.displayName,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
           trailing: IconButton(
             icon: Icon(
               habit.hasReminder
-                  ? Icons.notifications_active
+                  ? Icons.notifications_active_rounded
                   : Icons.notifications_off_outlined,
               color: habit.hasReminder
-                  ? AppColors.primary
+                  ? habit.category.color
                   : AppColors.textSecondary,
               size: 24,
             ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/habit.dart';
 import '../models/habit_frequency.dart';
 import '../models/activity_log.dart';
+import '../models/habit_category.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -20,6 +21,7 @@ class HabitService {
     required TimeOfDay time,
     required HabitFrequency frequency,
     required bool hasReminder,
+    required HabitCategory category,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
@@ -32,6 +34,7 @@ class HabitService {
       frequency: frequency,
       createdAt: DateTime.now(),
       hasReminder: hasReminder,
+      category: category,
     );
 
     final docRef = await _habitsCollection.add(habit.toMap());
