@@ -27,3 +27,4 @@ This Flutter app is designed to help users build and maintain habits effortlessl
 
 ## Screenshots
 ![progressis](https://github.com/user-attachments/assets/e00522b8-7697-4a20-8dbe-8fd05e8c524c)
+![2](https://github.com/user-attachments/assets/702739f1-b3df-4cd5-aa48-ece4359de78b) ![1](https://github.com/user-attachments/assets/34d69801-fa87-4e0b-81b1-2c1a913aaf1f)
