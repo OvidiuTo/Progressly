@@ -25,107 +25,6 @@ class _HomePageState extends State<HomePage> {
   HabitCategory? _selectedCategory;
   List<Habit> _currentHabits = [];
   List<Habit> _displayedHabits = [];
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  // Add this method to filter habits by name
-  List<Habit> _filterHabitsBySearch(List<Habit> habits, String query) {
-    if (query.isEmpty) return habits;
-    return habits
-        .where(
-            (habit) => habit.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
-
-  // Add the search bar widget
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.textSecondary.withOpacity(0.1),
-          ),
-        ),
-        child: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search habits...',
-            hintStyle: TextStyle(
-              color: AppColors.textSecondary.withOpacity(0.5),
-              fontSize: 14,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: AppColors.textSecondary.withOpacity(0.5),
-            ),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    color: AppColors.textSecondary.withOpacity(0.5),
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _displayedHabits = _getFilteredHabits(_currentHabits);
-                      });
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-          onChanged: (value) {
-            setState(() {
-              _displayedHabits = _filterHabitsBySearch(
-                _getFilteredHabits(_currentHabits),
-                value,
-              );
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showAddHabitDialog(BuildContext context) async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => const AddHabitDialog(),
-    );
-
-    if (result != null) {
-      try {
-        await _habitService.addHabit(
-          name: result['name'] as String,
-          time: result['time'] as TimeOfDay,
-          frequency: result['frequency'] as HabitFrequency,
-          hasReminder: result['hasReminder'] as bool,
-          category: result['category'] as HabitCategory,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Habit added successfully')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to add habit: ${e.toString()}')),
-          );
-        }
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,10 +57,7 @@ class _HomePageState extends State<HomePage> {
             _currentHabits = _sortHabits(habits);
 
             // Apply category and search filters
-            _displayedHabits = _filterHabitsBySearch(
-              _getFilteredHabits(_currentHabits),
-              _searchController.text,
-            );
+            _displayedHabits = _getFilteredHabits(_currentHabits);
 
             // Calculate completed habits count
             final completedToday = _currentHabits.where((habit) {
@@ -185,8 +81,6 @@ class _HomePageState extends State<HomePage> {
                       _buildTodaySection(),
                       const SizedBox(height: 16),
                       _buildCategoryFilter(),
-                      const SizedBox(height: 16),
-                      _buildSearchBar(),
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -411,26 +305,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildTodaySection() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Today\'s Habits',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Today\'s Habits',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          'Keep going, you\'re doing great!',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
+          SizedBox(height: 4),
+          Text(
+            'Keep going, you\'re doing great!',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -728,6 +625,36 @@ class _HomePageState extends State<HomePage> {
         }
         return aCompleted ? 1 : -1;
       });
+  }
+
+  Future<void> _showAddHabitDialog(BuildContext context) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const AddHabitDialog(),
+    );
+
+    if (result != null) {
+      try {
+        await _habitService.addHabit(
+          name: result['name'] as String,
+          time: result['time'] as TimeOfDay,
+          frequency: result['frequency'] as HabitFrequency,
+          hasReminder: result['hasReminder'] as bool,
+          category: result['category'] as HabitCategory,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Habit added successfully')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to add habit: ${e.toString()}')),
+          );
+        }
+      }
+    }
   }
 }
 
