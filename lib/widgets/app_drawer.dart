@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../services/auth_service.dart';
 import '../utils/styles.dart';
 import '../providers/route_provider.dart';

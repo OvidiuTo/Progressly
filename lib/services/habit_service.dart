@@ -158,9 +158,7 @@ class HabitService {
   Future<void> updateHabitReminder(String habitId, bool hasReminder) async {
     final habit = await _habitsCollection.doc(habitId).get();
     if (!habit.exists) throw Exception('Habit not found');
-
-    final habitData = Habit.fromMap(habit.id, habit.data()!);
-
+    
     await _habitsCollection.doc(habitId).update({
       'hasReminder': hasReminder,
     });

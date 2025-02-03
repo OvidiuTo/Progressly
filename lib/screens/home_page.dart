@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/habit_frequency.dart';
-import '../services/auth_service.dart';
 import '../services/habit_service.dart';
 import '../models/habit.dart';
 import '../models/habit_category.dart';
@@ -20,7 +18,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   HabitCategory? _selectedCategory;
   List<Habit> _currentHabits = [];
