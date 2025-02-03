@@ -135,9 +135,17 @@ class _HomePageState extends State<HomePage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -147,8 +155,9 @@ class _HomePageState extends State<HomePage> {
               const Text(
                 'Daily Progress',
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textPrimary,
                   fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 8),
@@ -156,8 +165,8 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Text(
                     '${progress.toInt()}%',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: AppColors.primary,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
@@ -177,8 +186,8 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 8),
               Text(
                 '$completedHabits of $totalHabits completed',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppColors.textPrimary.withOpacity(0.7),
                   fontSize: 14,
                 ),
               ),
