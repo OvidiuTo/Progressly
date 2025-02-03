@@ -22,6 +22,80 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
+  HabitCategory? _selectedCategory;
+  List<Habit> _currentHabits = [];
+  List<Habit> _displayedHabits = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Add this method to filter habits by name
+  List<Habit> _filterHabitsBySearch(List<Habit> habits, String query) {
+    if (query.isEmpty) return habits;
+    return habits
+        .where(
+            (habit) => habit.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // Add the search bar widget
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.textSecondary.withOpacity(0.1),
+          ),
+        ),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search habits...',
+            hintStyle: TextStyle(
+              color: AppColors.textSecondary.withOpacity(0.5),
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              Icons.search,
+              color: AppColors.textSecondary.withOpacity(0.5),
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    color: AppColors.textSecondary.withOpacity(0.5),
+                    onPressed: () {
+                      setState(() {
+                        _searchController.clear();
+                        _displayedHabits = _getFilteredHabits(_currentHabits);
+                      });
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _displayedHabits = _filterHabitsBySearch(
+                _getFilteredHabits(_currentHabits),
+                value,
+              );
+            });
+          },
+        ),
+      ),
+    );
+  }
 
   Future<void> _showAddHabitDialog(BuildContext context) async {
     final result = await showDialog<Map<String, dynamic>>(
@@ -81,33 +155,16 @@ class _HomePageState extends State<HomePage> {
             }
 
             final habits = snapshot.data ?? [];
+            _currentHabits = _sortHabits(habits);
 
-            // Sort habits: uncompleted first, then completed
-            final sortedHabits = habits.toList()
-              ..sort((a, b) {
-                final now = DateTime.now();
-                final todayDate = DateTime(now.year, now.month, now.day);
-
-                final aCompleted = a.completedDates.any((date) =>
-                    date.year == todayDate.year &&
-                    date.month == todayDate.month &&
-                    date.day == todayDate.day);
-
-                final bCompleted = b.completedDates.any((date) =>
-                    date.year == todayDate.year &&
-                    date.month == todayDate.month &&
-                    date.day == todayDate.day);
-
-                if (aCompleted == bCompleted) {
-                  return a.time.hour * 60 +
-                      a.time.minute -
-                      (b.time.hour * 60 + b.time.minute);
-                }
-                return aCompleted ? 1 : -1;
-              });
+            // Apply category and search filters
+            _displayedHabits = _filterHabitsBySearch(
+              _getFilteredHabits(_currentHabits),
+              _searchController.text,
+            );
 
             // Calculate completed habits count
-            final completedToday = habits.where((habit) {
+            final completedToday = _currentHabits.where((habit) {
               final today = DateTime.now();
               final todayDate = DateTime(today.year, today.month, today.day);
               return habit.completedDates.any((date) =>
@@ -120,57 +177,30 @@ class _HomePageState extends State<HomePage> {
               slivers: [
                 _buildAppBar(context),
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProgressCard(habits.length, completedToday),
-                        const SizedBox(height: 24),
-                        _buildTodaySection(),
-                      ],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildProgressCard(_currentHabits.length, completedToday),
+                      const SizedBox(height: 24),
+                      _buildTodaySection(),
+                      const SizedBox(height: 16),
+                      _buildCategoryFilter(),
+                      const SizedBox(height: 16),
+                      _buildSearchBar(),
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
-                if (sortedHabits.isEmpty)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.note_add_outlined,
-                            size: 64,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'No habits yet',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 18,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Add your first habit to get started',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
+                if (_displayedHabits.isEmpty)
+                  _buildEmptyState()
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) =>
-                            _buildHabitItem(sortedHabits[index]),
-                        childCount: sortedHabits.length,
+                            _buildHabitItem(_displayedHabits[index]),
+                        childCount: _displayedHabits.length,
                       ),
                     ),
                   ),
@@ -415,7 +445,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     return Dismissible(
-      key: Key(habit.id),
+      key: ValueKey(habit.id + isCompleted.toString()),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -517,26 +547,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  color: AppColors.textSecondary,
-                  size: 14,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  habit.frequency.displayName,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
           trailing: IconButton(
             icon: Icon(
               habit.hasReminder
@@ -578,6 +588,146 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  List<Habit> _getFilteredHabits(List<Habit> habits) {
+    if (_selectedCategory == null) return habits;
+    return habits
+        .where((habit) => habit.category == _selectedCategory)
+        .toList();
+  }
+
+  Widget _buildCategoryFilter() {
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: HabitCategory.values.length + 1, // +1 for "All" option
+        itemBuilder: (context, index) {
+          // First item is "All"
+          if (index == 0) {
+            final isSelected = _selectedCategory == null;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: isSelected,
+                showCheckmark: false,
+                label: const Text('All'),
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                backgroundColor: Colors.transparent,
+                selectedColor: AppColors.primary,
+                side: BorderSide(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary.withOpacity(0.2),
+                ),
+                onSelected: (_) => setState(() => _selectedCategory = null),
+              ),
+            );
+          }
+
+          final category = HabitCategory.values[index - 1];
+          final isSelected = category == _selectedCategory;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              showCheckmark: false,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    category.icon,
+                    size: 16,
+                    color: isSelected ? Colors.white : category.color,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(category.label),
+                ],
+              ),
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              backgroundColor: Colors.transparent,
+              selectedColor: category.color,
+              side: BorderSide(
+                color: isSelected
+                    ? category.color
+                    : AppColors.textSecondary.withOpacity(0.2),
+              ),
+              onSelected: (_) => setState(() => _selectedCategory = category),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SliverFillRemaining(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(
+              Icons.note_add_outlined,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No habits yet',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 18,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Add your first habit to get started',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Habit> _sortHabits(List<Habit> habits) {
+    // Sort habits: uncompleted first, then completed
+    return habits.toList()
+      ..sort((a, b) {
+        final now = DateTime.now();
+        final todayDate = DateTime(now.year, now.month, now.day);
+
+        final aCompleted = a.completedDates.any((date) =>
+            date.year == todayDate.year &&
+            date.month == todayDate.month &&
+            date.day == todayDate.day);
+
+        final bCompleted = b.completedDates.any((date) =>
+            date.year == todayDate.year &&
+            date.month == todayDate.month &&
+            date.day == todayDate.day);
+
+        if (aCompleted == bCompleted) {
+          return a.time.hour * 60 +
+              a.time.minute -
+              (b.time.hour * 60 + b.time.minute);
+        }
+        return aCompleted ? 1 : -1;
+      });
   }
 }
 
