@@ -41,4 +41,23 @@ class AuthService {
     final user = _auth.currentUser;
     return user?.email;
   }
+
+  // Add this method
+  Future<String?> getUserEmail() async {
+    final user = _auth.currentUser;
+    return user?.email;
+  }
+
+  // Add these methods to AuthService class
+  Future<String?> getUsername() async {
+    final user = _auth.currentUser;
+    return user?.displayName;
+  }
+
+  Future<void> updateUsername(String username) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.updateDisplayName(username);
+    }
+  }
 }

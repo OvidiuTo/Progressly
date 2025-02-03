@@ -133,171 +133,59 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProgressCard(int totalHabits, int completedHabits) {
-    final completionPercentage =
-        totalHabits > 0 ? (completedHabits / totalHabits * 100).round() : 0;
+    final progress =
+        totalHabits > 0 ? (completedHabits / totalHabits) * 100 : 0;
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const Text(
+                'Daily Progress',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
                 children: [
                   Text(
-                    'Daily Progress',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                    '${progress.toInt()}%',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$completionPercentage',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '%',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  const Spacer(),
+                  CustomPaint(
+                    size: const Size(48, 48),
+                    painter: ProgressRingPainter(
+                      progress: progress / 100,
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                      progressColor: AppColors.primary,
+                      strokeWidth: 8,
                     ),
                   ),
                 ],
               ),
-              _buildProgressRing(completedHabits, totalHabits),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                Container(
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 500),
-                      height: 12,
-                      width: constraints.maxWidth *
-                          (completedHabits /
-                              (totalHabits == 0 ? 1 : totalHabits)),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+              const SizedBox(height: 8),
               Text(
                 '$completedHabits of $totalHabits completed',
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
-              if (completedHabits == totalHabits && totalHabits > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.stars_rounded,
-                        color: Colors.green,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'All Done!',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressRing(int completed, int total) {
-    return Container(
-      width: 64,
-      height: 64,
-      child: CustomPaint(
-        painter: ProgressRingPainter(
-          progress: total > 0 ? completed / total : 0,
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          progressColor: AppColors.primary,
-          strokeWidth: 8,
-        ),
-        child: Center(
-          child: Icon(
-            completed == total && total > 0
-                ? Icons.celebration
-                : Icons.local_fire_department,
-            color: AppColors.primary,
-            size: 24,
           ),
         ),
       ),
